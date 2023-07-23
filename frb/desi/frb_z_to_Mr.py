@@ -32,9 +32,16 @@ def estimate_mr_from_z(filename=None):
     #Remove the FRBs with no redshifts
     df = df[df['z'] > 0]
 
+    n_frbs = len(df)
+
+    # Select FRBs in the DESI footprint
+    df = df[df['is_in_DESI'] == True]
+
     ra  = [x*u.degree for x in df['RA']]
     dec = [x*u.degree for x in df['Dec']]
     z   = df['z'].values
+
+    n_samples = len(df)
 
     # Hiding this here to avoid a dependency
     from dustmaps.sfd import SFDQuery
@@ -48,9 +55,10 @@ def estimate_mr_from_z(filename=None):
 
     dist_mod = cosmo.distmod(z).value
 
-    n_samples = len(z)
-    print('Number of FRBs = {:d}'.format(n_samples))
-
+    
+    print('Number of FRBs = {:d}'.format(n_frbs))
+    print('Number of FRBs in desi = {:d}'.format(n_samples))
+    print(' "%" of FRBs in desi = {:g}'.format(n_samples/n_frbs))
     samples = 100
     m_rs= []
     frac = []
@@ -66,16 +74,16 @@ def estimate_mr_from_z(filename=None):
 
 
         # Calculate the fraction of FRBs with Mr < 19.5 and z<0.6 - BGS Bright
-        frac1 = len(df[(df['mr'] <= 19.5) & (df['z'] < 0.6)])/n_samples
+        frac1 = len(df[(df['mr'] <= 19.5) & (df['z'] < 0.6)])/n_frbs
 
         # Calculate the fraction of FRBs with 19.5 < Mr < 20.175 and z<0.6 - BGS Faint
-        frac2 = len(df[(df['mr'] > 19.5) & (df['mr'] <= 20.175) & (df['z'] < 0.6)])/n_samples
+        frac2 = len(df[(df['mr'] > 19.5) & (df['mr'] <= 20.175) & (df['z'] < 0.6)])/n_frbs
 
         # Calculate the fraction of FRBs with 20 < Mr < 24 and 0.6 < z < 1.6 - ELGs
-        frac3 = len(df[(df['mr'] > 20) & (df['mr'] <= 24) & (df['z'] > 0.6) & (df['z'] <= 1.6)])/n_samples
+        frac3 = len(df[(df['mr'] > 20) & (df['mr'] <= 24) & (df['z'] > 0.6) & (df['z'] <= 1.6)])/n_frbs
 
         # Calculate the fraction of overlap in the above two samples
-        frac_overlap = len(df[(df['mr'] <= 20.175) & (df['mr'] > 20) & (df['z'] > 0.6) & (df['z'] <= 1.6)])/n_samples
+        frac_overlap = len(df[(df['mr'] <= 20.175) & (df['mr'] > 20) & (df['z'] > 0.6) & (df['z'] <= 1.6)])/n_frbs
 
         # Calculate the fraction for the rest of the FRBs which are not in the above three categories
         frac_rest = 1 - (frac1 + frac2 + frac3 - frac_overlap) 
@@ -147,7 +155,7 @@ def estimate_mr_from_z(filename=None):
 if __name__ == '__main__':
     import time
     t0 = time.time()
-    estimate_mr_from_z('final_curve_2.csv')
+    estimate_mr_from_z('final_curve_3.csv')
     t1 = time.time()
     print('Elapsed time = {:g} seconds'.format(t1-t0))
 
